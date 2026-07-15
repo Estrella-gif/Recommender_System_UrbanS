@@ -1,2 +1,24 @@
-data/*
-*.csv
+# Raw data files
+jupyter/data/raw/*.csv
+jupyter/data/raw/*.csv.gz
+
+# Processed data
+jupyter/data/processed/*.csv
+jupyter/data/processed/*.parquet
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment
+.env
+venv/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
