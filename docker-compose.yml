@@ -77,18 +77,18 @@ services:
   # =====================================================================
   metrics-dashboard:
     build:
-      context: ./ia-metrics-dashboard
+      context: ./frontend-dashboard
       dockerfile: Dockerfile.dev
     container_name: urbansoul-metrics
     restart: unless-stopped
     ports:
       - "4200:4200"
     volumes:
-      - ./ia-metrics-dashboard/src:/app/src
-      - ./ia-metrics-dashboard/angular.json:/app/angular.json
-      - ./ia-metrics-dashboard/tsconfig.json:/app/tsconfig.json
-      - ./ia-metrics-dashboard/tsconfig.app.json:/app/tsconfig.app.json
-      - ./ia-metrics-dashboard/.postcssrc.json:/app/.postcssrc.json
+      - ./frontend-dashboard/src:/app/src
+      - ./frontend-dashboard/angular.json:/app/angular.json
+      - ./frontend-dashboard/tsconfig.json:/app/tsconfig.json
+      - ./frontend-dashboard/tsconfig.app.json:/app/tsconfig.app.json
+      - ./frontend-dashboard/.postcssrc.json:/app/.postcssrc.json
     depends_on:
       - fastapi
 
@@ -97,18 +97,18 @@ services:
   # =====================================================================
   frontend:
     build:
-      context: ./frontend
+      context: ./frontend-catalogo
       dockerfile: Dockerfile.dev
     container_name: urbansoul-frontend
     restart: unless-stopped
     ports:
       - "4201:4201"
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/angular.json:/app/angular.json
-      - ./frontend/tsconfig.json:/app/tsconfig.json
-      - ./frontend/tsconfig.app.json:/app/tsconfig.app.json
-      - ./frontend/.postcssrc.json:/app/.postcssrc.json
+      - ./frontend-catalogo/src:/app/src
+      - ./frontend-catalogo/angular.json:/app/angular.json
+      - ./frontend-catalogo/tsconfig.json:/app/tsconfig.json
+      - ./frontend-catalogo/tsconfig.app.json:/app/tsconfig.app.json
+      - ./frontend-catalogo/.postcssrc.json:/app/.postcssrc.json
     depends_on:
       - backend
 
