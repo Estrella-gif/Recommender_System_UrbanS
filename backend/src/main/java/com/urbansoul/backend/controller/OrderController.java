@@ -10,7 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,21 +20,23 @@ public class OrderController {
 
     private final OrderService orderService;
 
+    private User currentUser() {
+        return (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Order createOrder(@AuthenticationPrincipal User user,
-                             @Valid @RequestBody OrderRequest request) {
-        return orderService.createOrder(user, request);
+    public Order createOrder(@Valid @RequestBody OrderRequest request) {
+        return orderService.createOrder(currentUser(), request);
     }
 
     @GetMapping
-    public Page<Order> listOrders(@AuthenticationPrincipal User user,
-                                  @PageableDefault(size = 10) Pageable pageable) {
-        return orderService.findByUser(user.getId(), pageable);
+    public Page<Order> listOrders(@PageableDefault(size = 10) Pageable pageable) {
+        return orderService.findByUser(currentUser().getId(), pageable);
     }
 
     @GetMapping("/{id}")
-    public Order getOrder(@AuthenticationPrincipal User user, @PathVariable Long id) {
-        return orderService.findByIdAndUser(id, user.getId());
+    public Order getOrder(@PathVariable Long id) {
+        return orderService.findByIdAndUser(id, currentUser().getId());
     }
 }

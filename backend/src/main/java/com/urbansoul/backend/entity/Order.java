@@ -6,6 +6,8 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -43,7 +45,7 @@ public class Order extends AuditableEntity {
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal total;
 
-    @Column(columnDefinition = "JSONB")
+    @JdbcTypeCode(SqlTypes.JSON)
     private String shippingAddress;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

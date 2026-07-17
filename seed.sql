@@ -98,11 +98,11 @@ INSERT INTO products (id, name, description, sku, category_id, brand_id, categor
 -- 4. USERS
 -- ============================================================
 INSERT INTO users (id, email, password_hash, first_name, last_name, phone) VALUES
-  (1, 'jhon.alvarado@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'Jhon', 'Alvarado', '+51924577291'),
-  (2, 'estrella.sanchez@email.com', '$2a$10$TfXK1qYVJvR8H3mZpN6yLuO2rXsWePcgKdT4wYq0BvNzL5jHfCiXO', 'Estrella', 'Sanchez', '+51994515165'),
-  (3, 'anthony.palomino@email.com', '$2a$10$8kR3mVtQxYpL2wZoN9jFge6TcAqXbHsWnE1yUdMzPvR7oKl0CfXaS', 'Anthony', 'Palomino', '+51946687410'),
-  (4, 'juan.lloclla@email.com', '$2a$10$2pQnW5vXtRzKm8LoY1jHfeD7sAqBcNxUeT4rZpMvC6oL9wXhFiKaG', 'Juan', 'Lloclla', '+51925786369'),
-  (5, 'joshua.ponte@email.com', '$2a$10$5rTmY8kLpQxN3vZoW7jDge2FcHqXbAsUnE9yPdMzR6oKl1CwViXbQ', 'Joshua', 'Ponte', '+51978952812');
+  (1, 'jhon.alvarado@email.com', '$2a$10$8HRApLdKOi7B5s5WznvSfeyS4SS4VavCW9XsmdEWR.0j8fcDWuXdO', 'Jhon', 'Alvarado', '+51924577291'),
+  (2, 'estrella.sanchez@email.com', '$2a$10$.S3tYNiZBHnK0ne9aNGQ4eB7stHfQhVQIpvpUqYVqvNPcXS31eTE.', 'Estrella', 'Sanchez', '+51994515165'),
+  (3, 'anthony.palomino@email.com', '$2a$10$XFIC4Mo1DO0h/X13D2TIKe6kwluEV/ynzm3zF7iVA5S8qrUcVtaIW', 'Anthony', 'Palomino', '+51946687410'),
+  (4, 'juan.lloclla@email.com', '$2a$10$DIwaNDNm.LgzRZK5ecaAxeNaQEoMZZpTrlzTl.3XxhtEKJyCW/Duy', 'Juan', 'Lloclla', '+51925786369'),
+  (5, 'joshua.ponte@email.com', '$2a$10$7Aa.7pgzVmdHiAqlHGmrSeGdOgHYwiktJC7WQmD1i969Kn4ohSGDq', 'Joshua', 'Ponte', '+51978952812');
 
 -- ============================================================
 -- 5. USER SESSIONS
