@@ -8,17 +8,15 @@ Sistema de recomendacion de articulos de moda (ropa, zapatos, accesorios, etc.) 
 Recommender_System_UrbanS/
 ├── init.sql                   # Esquema PostgreSQL para el e-commerce
 ├── data/
-│   └── raw/                   # Datasets originales (NO se versionan, ver .gitignore)
+│   ├── raw/                   # Datasets (2020-Apr.csv, 2020-Apr-L.csv)
+│   └── processed/             # Salidas de modelos (scores, predicciones)
 ├── jupyter/                   # Fase exploratoria y modelado
 │   ├── requirements.txt
-│   ├── notebooks/
-│   │   ├── eda/               # Analisis exploratorio de datos
-│   │   │   └── outputs/       # Graficos generados
-│   │   ├── procesamiento/     # Limpieza, feature engineering y evaluacion
-│   │   └── modelos/           # ML y Deep Learning
-│   └── data/
-│       ├── raw/               # Copia del dataset limpio para la IA
-│       └── processed/         # Salidas de modelos (scores, predicciones)
+│   └── notebooks/
+│       ├── eda/               # Analisis exploratorio de datos
+│       │   └── outputs/       # Graficos generados
+│       ├── procesamiento/     # Limpieza, feature engineering y evaluacion
+│       └── modelos/           # ML y Deep Learning
 ├── ia/                        # Servicio FastAPI de recomendacion
 │   ├── Dockerfile
 │   ├── requirements.txt
@@ -40,37 +38,36 @@ Recommender_System_UrbanS/
 
 ## Gestion de Datos
 
-Los datasets **NO** se versionan en Git (estan en `.gitignore`). Cada persona debe ubicarlos manualmente.
+Los datasets **NO** se versionan en Git (estan en `.gitignore`). Todos los componentes del proyecto (notebooks, batch job, IA) leen desde `data/` en la raiz.
 
 ### Archivos requeridos
 
-| Archivo | Origen | Donde colocarlo |
-|---------|--------|-----------------|
+| Archivo | Origen | Ubicacion |
+|---------|--------|-----------|
 | `2020-Apr.csv` | Dataset original (66.5M filas) | `data/raw/2020-Apr.csv` |
-| `2020-Apr-L.csv` | Dataset limpio (~9.6M filas, solo moda) | `jupyter/data/raw/2020-Apr-L.csv` |
+| `2020-Apr-L.csv` | Dataset limpio (~9.6M filas, solo moda) | `data/raw/2020-Apr-L.csv` |
 
 ### Paso a paso
 
 ```bash
-# 1. Crear las carpetas necesarias
+# 1. Crear las carpetas
 mkdir -p data/raw
-mkdir -p jupyter/data/raw
-mkdir -p jupyter/data/processed
+mkdir -p data/processed
 
-# 2. Copiar el dataset original a data/raw/
+# 2. Copiar el dataset original
 cp /ruta/de/descarga/2020-Apr.csv data/raw/
 
-# 3. Ejecutar el notebook de limpieza (genera 2020-Apr-L.csv en jupyter/data/raw/)
+# 3. Ejecutar el notebook de limpieza (genera 2020-Apr-L.csv en data/raw/)
 cd jupyter
 pip install -r requirements.txt
 jupyter notebook notebooks/procesamiento/limpieza.ipynb
 
-# 4. (Opcional) Si ya tienes el dataset limpio, copialo directamente
-cp /ruta/de/descarga/2020-Apr-L.csv jupyter/data/raw/
+# 4. (Alternativa) Si ya tienes el dataset limpio, copialo directo
+cp /ruta/de/descarga/2020-Apr-L.csv data/raw/
 ```
 
-> **Nota para el servicio IA**: `batch_job.py` lee `jupyter/data/raw/2020-Apr-L.csv` via `config.py`.  
-> Las notebooks de `jupyter/notebooks/modelos/` leen desde `../../data/raw/2020-Apr-L.csv` (ruta relativa a `data/raw/` raiz). Si ejecutas los notebooks, asegurate de tener el CSV en ambas ubicaciones o ajusta los paths.
+> Los notebooks de `jupyter/` leen con rutas relativas `../../data/raw/` que apuntan a `data/raw/` en raiz.  
+> El `batch_job.py` usa `config.py` que ya apunta a `data/` en raiz. Ambos leen del mismo lugar.
 
 ---
 

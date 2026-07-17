@@ -3,7 +3,7 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 ML_DIR = BASE_DIR / "ml"
-DATA_DIR = BASE_DIR.parent / "jupyter" / "data"
+DATA_DIR = BASE_DIR.parent.parent / "data"
 
 PIPELINE_PATH = ML_DIR / "ml_pipeline.pkl"
 GRU_MODEL_PATH = ML_DIR / "model_gru.keras"
