@@ -2,12 +2,41 @@
 
 Sistema de recomendacion de articulos de moda (ropa, zapatos, accesorios, etc.) con backend Spring Boot, modelo de IA con FastAPI y base de datos PostgreSQL.
 
+## Arranque rapido
+
+```bash
+docker compose up -d --build
+```
+
+Esto levanta los 5 servicios en orden (PostgreSQL → FastAPI + Backend → Frontend Angular + Dashboard Métricas):
+
+| Servicio | Puerto | Descripcion |
+|----------|:---:|-------------|
+| PostgreSQL | `5433` | Base de datos con `init.sql` y `seed.sql` auto-ejecutados |
+| FastAPI | `8000` | Servicio IA de recomendaciones + métricas |
+| Spring Boot | `8080` | Backend REST API del e-commerce |
+| Angular Metrics | `4200` | Dashboard de métricas de modelos IA en tiempo real |
+| Angular E-commerce | `4201` | Tienda UrbanSoul — catálogo, carrito, órdenes |
+
+Al primer `docker compose up`:
+
+1. PostgreSQL se levanta y ejecuta `init.sql` (schema) + `seed.sql` (datos de prueba)
+2. FastAPI y Backend esperan a que PostgreSQL esté healthy
+3. Los frontend Angular levantan sus dev servers con hot reload
+
+La BD persiste en el volumen `urbansoul_postgres_data`. Para recrearla desde cero:
+
+```bash
+docker compose down -v && docker compose up -d --build
+```
+
 ## Estructura del Proyecto
 
 ```
 Recommender_System_UrbanS/
-├── docker-compose.yml         # PostgreSQL + init.sql auto-deploy
+├── docker-compose.yml         # 5 servicios orquestados
 ├── init.sql                   # Esquema PostgreSQL para el e-commerce
+├── seed.sql                   # Datos de prueba (50 productos, 5 usuarios)
 ├── data/
 │   ├── raw/                   # Datasets (2020-Apr.csv, 2020-Apr-L.csv)
 │   └── processed/             # Salidas de modelos (scores, predicciones)
@@ -117,6 +146,16 @@ psql -h localhost -p 5433 -U urbansoul -d urbansoul_db
 | `interactions` | Eventos `view` / `cart` / `purchase` — **alimenta el modelo de recomendacion** |
 | `orders` | Ordenes de compra |
 | `order_items` | Lineas de cada orden |
+
+### Usuarios de prueba (seed)
+
+| Email | Password |
+|-------|----------|
+| `maria.garcia@email.com` | `admin123` |
+| `carlos.lopez@email.com` | `admin123` |
+| `ana.martinez@email.com` | `admin123` |
+| `diego.rodriguez@email.com` | `admin123` |
+| `lucia.fernandez@email.com` | `admin123` |
 
 ### Flujo de recomendacion
 
