@@ -6,6 +6,7 @@ Sistema de recomendacion de articulos de moda (ropa, zapatos, accesorios, etc.) 
 
 ```
 Recommender_System_UrbanS/
+├── docker-compose.yml         # PostgreSQL + init.sql auto-deploy
 ├── init.sql                   # Esquema PostgreSQL para el e-commerce
 ├── data/
 │   ├── raw/                   # Datasets (2020-Apr.csv, 2020-Apr-L.csv)
@@ -73,10 +74,23 @@ cp /ruta/de/descarga/2020-Apr-L.csv data/raw/
 
 ## Base de Datos (PostgreSQL)
 
-El archivo `init.sql` contiene el esquema completo del e-commerce. Ejecutalo contra una instancia de PostgreSQL 15+:
+Levanta PostgreSQL con Docker Compose:
 
 ```bash
-psql -h localhost -U postgres -d urbans -f init.sql
+docker compose up -d
+```
+
+- **Host**: `localhost:5433` (puerto no default para no interferir con PostgreSQL local)
+- **BD**: `urbansoul_db`
+- **Usuario**: `urbansoul`
+- **Password**: `urbansoul`
+
+El `init.sql` se ejecuta automaticamente solo la primera vez que se crea el volumen. Si ya tienes datos, no se vuelve a ejecutar.
+
+Para conectarte manualmente:
+
+```bash
+psql -h localhost -p 5433 -U urbansoul -d urbansoul_db
 ```
 
 ### Tablas

@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: urbansoul-db
+    restart: unless-stopped
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: urbansoul_db
+      POSTGRES_USER: urbansoul
+      POSTGRES_PASSWORD: urbansoul
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U urbansoul -d urbansoul_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    name: urbansoul_postgres_data
