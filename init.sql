@@ -76,7 +76,7 @@ CREATE TABLE users (
 CREATE TABLE user_sessions (
     id           UUID         PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id      BIGINT       REFERENCES users(id) ON DELETE SET NULL,
-    ip_address   INET,
+    ip_address   VARCHAR(45),
     user_agent   TEXT,
     expires_at   TIMESTAMPTZ  NOT NULL,
     created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()

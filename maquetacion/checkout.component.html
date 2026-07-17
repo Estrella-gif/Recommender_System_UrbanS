@@ -1,0 +1,151 @@
+<!-- ============================================================
+     pages/checkout/checkout.html
+     Datos dinámicos esperados en checkout.ts:
+       - items: CartItem[]  (desde CartService / localStorage)
+       - subtotal, shippingCost, total: number
+       - shippingForm: FormGroup  → fields: fullName, address, city, postalCode, phone
+       - submitting: boolean
+       - summaryExpanded: boolean (mobile collapsible)
+       - onSubmit()  → POST /api/orders  { items: [{productId, quantity}] } → redirect /orders
+     ============================================================ -->
+
+<main class="bg-paper dark:bg-ink text-ink dark:text-paper min-h-screen">
+  <div class="mx-auto max-w-5xl px-5 py-10">
+
+    <h1 class="font-display text-4xl sm:text-5xl mb-8">Checkout</h1>
+
+    <!-- ============ PROGRESS STEPS ============ -->
+    <ol class="flex items-center gap-3 mb-10 font-mono text-xs uppercase">
+      <li class="flex items-center gap-2">
+        <span class="h-6 w-6 grid place-items-center rounded-full bg-lime text-ink font-bold">1</span>
+        <span class="font-bold">Envío</span>
+      </li>
+      <li class="h-px w-8 bg-ink/15 dark:bg-paper/15"></li>
+      <li class="flex items-center gap-2 opacity-40">
+        <span class="h-6 w-6 grid place-items-center rounded-full border border-ink/30 dark:border-paper/30">2</span>
+        <span>Pago</span>
+      </li>
+      <li class="h-px w-8 bg-ink/15 dark:bg-paper/15"></li>
+      <li class="flex items-center gap-2 opacity-40">
+        <span class="h-6 w-6 grid place-items-center rounded-full border border-ink/30 dark:border-paper/30">3</span>
+        <span>Confirmar</span>
+      </li>
+    </ol>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+
+      <!-- ============ SHIPPING FORM ============ -->
+      <form [formGroup]="shippingForm" (ngSubmit)="onSubmit()" class="lg:col-span-2 space-y-5">
+        <h2 class="font-display text-2xl mb-2">Dirección de envío</h2>
+
+        <div class="relative">
+          <input
+            type="text" formControlName="fullName" id="fullName" placeholder=" "
+            class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal
+                   px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none"
+          />
+          <label for="fullName" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Nombre completo</label>
+          @if (shippingForm.get('fullName')?.invalid && shippingForm.get('fullName')?.touched) {
+            <p class="mt-1 text-xs text-danger font-mono">Ingresa tu nombre completo.</p>
+          }
+        </div>
+
+        <div class="relative">
+          <input
+            type="text" formControlName="address" id="address" placeholder=" "
+            class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal
+                   px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none"
+          />
+          <label for="address" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Dirección</label>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="relative">
+            <input
+              type="text" formControlName="city" id="city" placeholder=" "
+              class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal
+                     px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none"
+            />
+            <label for="city" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Ciudad</label>
+          </div>
+          <div class="relative">
+            <input
+              type="text" formControlName="postalCode" id="postalCode" placeholder=" "
+              class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal
+                     px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none"
+            />
+            <label for="postalCode" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Código postal</label>
+          </div>
+        </div>
+
+        <div class="relative">
+          <input
+            type="tel" formControlName="phone" id="phone" placeholder=" "
+            class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal
+                   px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none"
+          />
+          <label for="phone" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Teléfono</label>
+        </div>
+
+        <button
+          type="submit"
+          [disabled]="shippingForm.invalid || submitting"
+          class="hidden lg:block w-full rounded-full bg-lime text-ink font-bold py-3.5 hover:bg-ink hover:text-paper
+                 dark:hover:bg-paper dark:hover:text-ink transition-colors disabled:opacity-40"
+        >
+          {{ submitting ? 'Confirmando…' : 'Confirmar pedido' }}
+        </button>
+      </form>
+
+      <!-- ============ ORDER SUMMARY (collapsible on mobile) ============ -->
+      <aside class="rounded-xl bg-ink text-paper dark:bg-paper dark:text-ink p-6 h-fit">
+        <button
+          type="button"
+          class="lg:hidden w-full flex justify-between items-center font-display text-xl"
+          (click)="summaryExpanded = !summaryExpanded"
+        >
+          Resumen del pedido
+          <span>{{ summaryExpanded ? '−' : '+' }}</span>
+        </button>
+        <h2 class="hidden lg:block font-display text-2xl mb-4">Resumen del pedido</h2>
+
+        <div [class.hidden]="!summaryExpanded" class="lg:block mt-4 lg:mt-0">
+          <ul class="space-y-3 mb-4">
+            @for (item of items; track item.product.id) {
+              <li class="flex gap-3 text-sm">
+                <div class="h-14 w-12 shrink-0 rounded bg-paper/10 dark:bg-ink/10 overflow-hidden">
+                  @if (item.product.imageUrl) {
+                    <img [src]="item.product.imageUrl" [alt]="item.product.name" class="h-full w-full object-cover" />
+                  }
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="truncate font-bold">{{ item.product.name }}</p>
+                  <p class="font-mono text-xs opacity-60">x{{ item.quantity }}</p>
+                </div>
+                <p class="font-mono">${{ item.product.price * item.quantity | number:'1.2-2' }}</p>
+              </li>
+            }
+          </ul>
+
+          <dl class="space-y-2 font-mono text-sm border-t border-paper/15 dark:border-ink/15 pt-4">
+            <div class="flex justify-between"><dt class="opacity-70">Subtotal</dt><dd>${{ subtotal | number:'1.2-2' }}</dd></div>
+            <div class="flex justify-between"><dt class="opacity-70">Envío</dt><dd>{{ shippingCost === 0 ? 'Gratis' : ('$' + (shippingCost | number:'1.2-2')) }}</dd></div>
+          </dl>
+          <div class="mt-4 pt-4 border-t border-paper/15 dark:border-ink/15 flex justify-between font-mono font-bold text-lg">
+            <span>Total</span><span>${{ total | number:'1.2-2' }}</span>
+          </div>
+
+          <button
+            type="submit"
+            form="checkout-form"
+            (click)="onSubmit()"
+            [disabled]="shippingForm.invalid || submitting"
+            class="lg:hidden mt-6 w-full rounded-full bg-lime text-ink font-bold py-3.5 disabled:opacity-40"
+          >
+            {{ submitting ? 'Confirmando…' : 'Confirmar pedido' }}
+          </button>
+        </div>
+      </aside>
+    </div>
+  </div>
+</main>

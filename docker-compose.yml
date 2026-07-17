@@ -1,4 +1,7 @@
 services:
+  # =====================================================================
+  # 1. PostgreSQL — base de datos del e-commerce
+  # =====================================================================
   postgres:
     image: postgres:15
     container_name: urbansoul-db
@@ -12,11 +15,102 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/01_init.sql:ro
+      - ./seed.sql:/docker-entrypoint-initdb.d/02_seed.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U urbansoul -d urbansoul_db"]
       interval: 5s
       timeout: 5s
       retries: 5
+
+  # =====================================================================
+  # 2. FastAPI — servicio de recomendacion IA
+  # =====================================================================
+  fastapi:
+    build:
+      context: ./ia
+      dockerfile: Dockerfile
+    container_name: urbansoul-ia
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: urbansoul_db
+      DB_USER: urbansoul
+      DB_PASSWORD: urbansoul
+    volumes:
+      - ./ia/app/ml:/app/app/ml
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =====================================================================
+  # 3. Spring Boot — backend REST API
+  # =====================================================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: urbansoul-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/urbansoul_db
+      SPRING_DATASOURCE_USERNAME: urbansoul
+      SPRING_DATASOURCE_PASSWORD: urbansoul
+      JWT_SECRET: urbansoul-jwt-secret-key-for-dev-only-64bytes-long!!
+      IA_SERVICE_URL: http://fastapi:8000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # =====================================================================
+  # 4. Angular — dashboard de metricas IA (:4200)
+  # =====================================================================
+  metrics-dashboard:
+    build:
+      context: ./ia-metrics-dashboard
+      dockerfile: Dockerfile.dev
+    container_name: urbansoul-metrics
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./ia-metrics-dashboard/src:/app/src
+      - ./ia-metrics-dashboard/angular.json:/app/angular.json
+      - ./ia-metrics-dashboard/tsconfig.json:/app/tsconfig.json
+      - ./ia-metrics-dashboard/tsconfig.app.json:/app/tsconfig.app.json
+      - ./ia-metrics-dashboard/.postcssrc.json:/app/.postcssrc.json
+    depends_on:
+      - fastapi
+
+  # =====================================================================
+  # 5. Angular — frontend e-commerce UrbanSoul (:4201)
+  # =====================================================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: urbansoul-frontend
+    restart: unless-stopped
+    ports:
+      - "4201:4201"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/angular.json:/app/angular.json
+      - ./frontend/tsconfig.json:/app/tsconfig.json
+      - ./frontend/tsconfig.app.json:/app/tsconfig.app.json
+      - ./frontend/.postcssrc.json:/app/.postcssrc.json
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:

@@ -1,0 +1,199 @@
+/* ============================================================
+   UrbanSoul — Design System
+   Tailwind v4 (CSS-first config, no tailwind.config.js)
+   ============================================================ */
+
+@import 'tailwindcss';
+
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap');
+
+/* ---------- Theme tokens ---------- */
+@theme {
+  --color-ink: #0a0a0a;       /* dark bg / dark text on light */
+  --color-paper: #fafafa;     /* light bg / light text on dark */
+  --color-lime: #a3e635;      /* signature accent — CTAs, tag string, badges */
+  --color-charcoal: #171717;  /* dark-mode surface (cards, navbar) */
+  --color-smoke: #e5e5e5;     /* light-mode surface (cards, dividers) */
+  --color-danger: #ef4444;    /* errors, cancelled state */
+
+  --font-display: 'Anton', 'Impact', sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'Space Mono', 'Courier New', monospace;
+
+  --radius-tag: 0.75rem;
+}
+
+@variant dark (&:where(.dark, .dark *));
+
+/* ---------- Base ---------- */
+html {
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+  text-transform: uppercase;
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+  letter-spacing: -0.01em;
+}
+
+/* ============================================================
+   SIGNATURE 1 — Hang-tag price tag
+   A die-cut retail price tag clipped to a card corner: string,
+   punch hole, dashed perforation, slight physical rotation.
+   Usage: wrap in <div class="hangtag">…price/mono content…</div>
+   ============================================================ */
+
+.hangtag {
+  position: absolute;
+  top: -0.65rem;
+  right: 1.1rem;
+  transform: rotate(-4deg);
+  background: var(--color-lime);
+  color: var(--color-ink);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  padding: 0.35rem 0.85rem 0.35rem 1.35rem;
+  clip-path: polygon(14% 0%, 100% 0%, 100% 100%, 14% 100%, 0% 50%);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+  z-index: 10;
+  transition: transform 0.2s ease;
+}
+
+.hangtag::before {
+  /* punch hole */
+  content: '';
+  position: absolute;
+  left: 0.42rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.32rem;
+  height: 0.32rem;
+  border-radius: 999px;
+  background: var(--color-ink);
+  box-shadow: inset 0 0 0 1px rgba(250,250,250,0.15);
+}
+
+.hangtag::after {
+  /* string connecting tag to card edge */
+  content: '';
+  position: absolute;
+  left: 0.58rem;
+  top: -0.55rem;
+  width: 1px;
+  height: 0.6rem;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--color-ink) 0,
+    var(--color-ink) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+  opacity: 0.5;
+}
+
+.group:hover .hangtag {
+  transform: rotate(-1deg) translateY(-2px);
+}
+
+.hangtag.is-sale {
+  background: var(--color-paper);
+}
+
+/* Dashed die-cut edge used on secondary tags (e.g. SKU tag in PDP) */
+.tag-perforated {
+  border: 1.5px dashed color-mix(in srgb, var(--color-ink) 25%, transparent);
+  border-radius: var(--radius-tag);
+}
+.dark .tag-perforated {
+  border-color: color-mix(in srgb, var(--color-paper) 25%, transparent);
+}
+
+/* ============================================================
+   SIGNATURE 2 — Drop marquee ticker (sits under navbar)
+   ============================================================ */
+
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+  background: var(--color-ink);
+  color: var(--color-lime);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-lime) 30%, transparent);
+}
+
+.marquee__track {
+  display: inline-flex;
+  align-items: center;
+  animation: marquee 28s linear infinite;
+  will-change: transform;
+}
+
+.marquee:hover .marquee__track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track { animation: none; }
+}
+
+/* ---------- Shared micro-interactions ---------- */
+
+.card-hover {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.card-hover:hover {
+  transform: scale(1.02);
+  box-shadow: 0 20px 40px -12px rgba(0,0,0,0.35);
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-smoke) 60%, transparent) 25%,
+    color-mix(in srgb, var(--color-smoke) 90%, transparent) 37%,
+    color-mix(in srgb, var(--color-smoke) 60%, transparent) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+.dark .skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-charcoal) 60%, transparent) 25%,
+    color-mix(in srgb, var(--color-charcoal) 90%, transparent) 37%,
+    color-mix(in srgb, var(--color-charcoal) 60%, transparent) 63%
+  );
+  background-size: 400% 100%;
+}
+@keyframes skeleton-pulse {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+.fade-in {
+  animation: fade-in 0.35s ease both;
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in, .card-hover, .skeleton { animation: none !important; transition: none !important; }
+}
+
+/* Visible keyboard focus (a11y floor) */
+:focus-visible {
+  outline: 2px solid var(--color-lime);
+  outline-offset: 2px;
+}

@@ -39,9 +39,13 @@ from app.ml.preprocessing import (
 )
 
 
-def load_data() -> pd.DataFrame:
-    df = pd.read_csv(RAW_DATA_PATH, parse_dates=["event_time"])
-    return df
+def load_data(use_db: bool = False) -> pd.DataFrame:
+    if use_db:
+        from app.db.connection import get_interactions_df
+        print("Loading interactions from PostgreSQL...")
+        return get_interactions_df()
+    print("Loading data from CSV...")
+    return pd.read_csv(RAW_DATA_PATH, parse_dates=["event_time"])
 
 
 def build_ml_pipeline(df: pd.DataFrame) -> dict:
@@ -175,7 +179,10 @@ def _preparar_datos_entrenamiento_gru(
         uid = int(row["user_idx"])
         candidato_id = int(row["product_idx"])
         ml_score = float(row["score_ml_refinado"])
-        target = int(row["target"])
+        
+        # ¡Mantén esta solución para evitar el error!
+        target = int(row.get("target", 1)) 
+        
         historial = historial_usuarios.get(uid, [])
         historial_filtrado = [p for p in historial if p != candidato_id]
         X_usuarios_list.append(uid)
@@ -467,10 +474,11 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-train", action="store_true")
     parser.add_argument("--num-users", type=int, default=None)
+    parser.add_argument("--db", action="store_true", help="Read interactions from PostgreSQL instead of CSV")
     args = parser.parse_args()
 
     print("Loading data...")
-    df = load_data()
+    df = load_data(use_db=args.db)
 
     print("Building ML pipeline...")
     pipeline = build_ml_pipeline(df)
