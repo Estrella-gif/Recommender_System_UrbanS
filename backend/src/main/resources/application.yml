@@ -1,4 +1,6 @@
 spring:
+  config:
+    import: optional:file:.env
   datasource:
     url: jdbc:postgresql://localhost:5433/urbansoul_db
     username: ${DB_USERNAME:urbansoul}
@@ -17,5 +19,5 @@ ia:
     url: ${IA_SERVICE_URL:http://localhost:8000}
 
 jwt:
-  secret: ${JWT_SECRET:changeme}
+  secret: 5b3c9f2a8e7d4a1b6f9c3e2d8a5b7f4c1e9d2a6b8f3c5e7d4a1b9f2c8e3d6a5b #${JWT_SECRET:changeme}
   expiration-ms: 86400000

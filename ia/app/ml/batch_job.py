@@ -175,7 +175,10 @@ def _preparar_datos_entrenamiento_gru(
         uid = int(row["user_idx"])
         candidato_id = int(row["product_idx"])
         ml_score = float(row["score_ml_refinado"])
-        target = int(row["target"])
+        
+        # ¡Mantén esta solución para evitar el error!
+        target = int(row.get("target", 1)) 
+        
         historial = historial_usuarios.get(uid, [])
         historial_filtrado = [p for p in historial if p != candidato_id]
         X_usuarios_list.append(uid)
