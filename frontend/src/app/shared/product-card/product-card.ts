@@ -7,36 +7,54 @@ import { Product } from '../../models';
   standalone: true,
   imports: [RouterLink],
   template: `
-    <a [routerLink]="['/product', product.id]"
-       class="group block bg-white dark:bg-zinc-900 rounded-2xl overflow-hidden border border-zinc-100 dark:border-zinc-800 hover:border-lime-400/50 dark:hover:border-lime-400/50 hover:shadow-xl transition-all duration-300">
-      <div class="aspect-[3/4] bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center overflow-hidden">
-        @if (product.imageUrl) {
-          <img [src]="product.imageUrl" [alt]="product.name" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-        } @else {
-          <span class="text-4xl text-zinc-300 dark:text-zinc-600">&#x1F455;</span>
-        }
+    <article class="group relative fade-in">
+      <div class="hangtag" [class.is-sale]="product.compareAtPrice && product.compareAtPrice > product.price">
+        \${{ product.price }}
       </div>
-      <div class="p-4">
-        <p class="text-xs text-zinc-500 dark:text-zinc-400 uppercase tracking-wide mb-1">{{ product.brand || 'UrbanSoul' }}</p>
-        <h3 class="font-semibold text-zinc-900 dark:text-white truncate">{{ product.name }}</h3>
-        <div class="flex items-center gap-2 mt-2">
-          <span class="text-lg font-bold text-zinc-900 dark:text-white">\${{ product.price }}</span>
-          @if (product.compareAtPrice && product.compareAtPrice > product.price) {
-            <span class="text-sm text-zinc-400 line-through">\${{ product.compareAtPrice }}</span>
-          }
+      @if (product.compareAtPrice && product.compareAtPrice > product.price) {
+        <span class="absolute top-3 left-3 z-10 rounded-full bg-danger text-paper text-[10px] font-bold px-2.5 py-1 uppercase">
+          -{{ discount() }}%
+        </span>
+      }
+      <a [routerLink]="['/product', product.id]" class="block">
+        <div class="card-hover rounded-xl bg-smoke dark:bg-charcoal overflow-hidden">
+          <div class="aspect-[3/4] bg-ink/5 dark:bg-paper/5">
+            @if (product.imageUrl) {
+              <img [src]="product.imageUrl" [alt]="product.name" class="h-full w-full object-cover" />
+            } @else {
+              <div class="h-full w-full flex items-center justify-center font-display text-4xl opacity-20">US</div>
+            }
+          </div>
+          <div class="p-4">
+            <p class="font-mono text-[10px] uppercase opacity-60">{{ product.brand || 'UrbanSoul' }} · {{ product.categoryName }}</p>
+            <h3 class="font-bold leading-tight mt-1">{{ product.name }}</h3>
+            <div class="mt-2 flex items-baseline gap-2 font-mono">
+              <span class="font-bold">\${{ product.price }}</span>
+              @if (product.compareAtPrice && product.compareAtPrice > product.price) {
+                <span class="text-xs line-through opacity-40">\${{ product.compareAtPrice }}</span>
+              }
+            </div>
+          </div>
         </div>
-        <button
-          (click)="addToCart($event)"
-          class="mt-3 w-full py-2 bg-zinc-900 dark:bg-white text-white dark:text-black text-sm font-medium rounded-xl hover:bg-lime-400 hover:text-black dark:hover:bg-lime-400 transition-colors">
-          Add to cart
-        </button>
-      </div>
-    </a>
+      </a>
+      <button type="button" (click)="addToCart($event)"
+        class="mt-3 w-full rounded-full bg-ink dark:bg-paper text-paper dark:text-ink py-2.5 text-sm font-bold
+               hover:bg-lime hover:text-ink transition-colors">
+        Agregar
+      </button>
+    </article>
   `,
 })
 export class ProductCard {
   @Input({ required: true }) product!: Product;
   readonly onAddToCart = output<Product>();
+
+  discount(): number {
+    if (this.product.compareAtPrice && this.product.compareAtPrice > this.product.price) {
+      return Math.round((1 - this.product.price / this.product.compareAtPrice) * 100);
+    }
+    return 0;
+  }
 
   addToCart(event: Event): void {
     event.preventDefault();

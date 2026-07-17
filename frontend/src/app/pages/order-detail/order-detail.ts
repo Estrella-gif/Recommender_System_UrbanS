@@ -1,99 +1,147 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe, NgClass } from '@angular/common';
 import { Order } from '../../models';
 import { OrderService } from '../../services/order.service';
 
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, DecimalPipe, NgClass],
   template: `
-    @if (order(); as order) {
-      <div class="max-w-3xl mx-auto px-4 py-16">
-        <a routerLink="/orders" class="text-sm text-zinc-500 hover:text-zinc-900 dark:hover:text-white transition-colors mb-6 inline-block">&larr; Back to orders</a>
+    <main class="bg-paper dark:bg-ink text-ink dark:text-paper min-h-screen">
+      <div class="mx-auto max-w-4xl px-5 py-10">
+        <a routerLink="/orders" class="font-mono text-xs opacity-60 hover:opacity-100 hover:text-lime mb-6 inline-flex items-center gap-1">← Volver a mis pedidos</a>
 
-        <div class="flex items-center justify-between mb-8">
-          <div>
-            <h1 class="text-2xl font-bold text-zinc-900 dark:text-white">Order #{{ order.orderNumber }}</h1>
-            <p class="text-sm text-zinc-500 mt-1">{{ order.createdAt | date:'medium' }}</p>
+        @if (loading()) {
+          <div class="space-y-4 mt-6">
+            <div class="skeleton h-24 rounded-xl"></div>
+            <div class="skeleton h-40 rounded-xl"></div>
           </div>
-          <span [class]="(statusColor(order.status)) + ' text-xs font-medium px-3 py-1 rounded-full'">
-            {{ order.status }}
-          </span>
-        </div>
+        } @else if (order(); as order) {
+          <div class="mt-4 flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <p class="font-mono text-xs opacity-60">PEDIDO</p>
+              <h1 class="font-display text-3xl sm:text-4xl">#{{ order.orderNumber }}</h1>
+              <p class="font-mono text-sm opacity-60 mt-1">{{ order.createdAt | date:'d MMM yyyy, HH:mm' }}</p>
+            </div>
+            <span class="font-mono text-xs font-bold uppercase px-4 py-2 rounded-full" [ngClass]="statusBadgeBg(order.status)">
+              {{ order.status }}
+            </span>
+          </div>
 
-        <div class="space-y-3 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6 mb-8">
-          @for (item of order.items; track item.id) {
-            <div class="flex items-center gap-4 py-3 border-b border-zinc-100 dark:border-zinc-800 last:border-0">
-              <div class="w-14 h-14 bg-zinc-100 dark:bg-zinc-800 rounded-xl flex items-center justify-center shrink-0">
-                @if (item.product.imageUrl) {
-                  <img [src]="item.product.imageUrl" [alt]="item.product.name" class="w-full h-full object-cover rounded-xl" />
-                } @else {
-                  <span class="text-lg text-zinc-300">&#x1F455;</span>
+          <div class="mt-8 flex items-center gap-2">
+            @for (step of statusSteps; track step; let i = $index) {
+              <div class="flex items-center flex-1">
+                <div class="h-3 w-3 rounded-full shrink-0"
+                  [class.bg-lime]="statusIndex(order.status) >= i"
+                  [class.bg-ink]="statusIndex(order.status) < i"
+                  [class.dark:bg-paper]="statusIndex(order.status) < i"
+                  [class.opacity-15]="statusIndex(order.status) < i"></div>
+                @if (i < statusSteps.length - 1) {
+                  <div class="h-px flex-1"
+                    [class.bg-lime]="statusIndex(order.status) > i"
+                    [class.bg-ink]="statusIndex(order.status) <= i"
+                    [class.dark:bg-paper]="statusIndex(order.status) <= i"
+                    [class.opacity-15]="statusIndex(order.status) <= i"></div>
                 }
               </div>
-              <div class="flex-1">
-                <p class="font-medium text-zinc-900 dark:text-white">{{ item.product.name }}</p>
-                <p class="text-sm text-zinc-500">{{ item.product.brand }} &middot; Qty: {{ item.quantity }}</p>
-              </div>
-              <p class="font-medium text-zinc-900 dark:text-white">\${{ item.totalPrice }}</p>
+            }
+          </div>
+          <div class="mt-2 flex justify-between font-mono text-[10px] uppercase opacity-50">
+            <span>Pendiente</span><span>Confirmado</span><span>Enviado</span><span>Entregado</span>
+          </div>
+
+          <div class="mt-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-4">
+              <h2 class="font-display text-2xl mb-2">Productos</h2>
+              @for (item of order.items; track item.id) {
+                <div class="flex gap-4 rounded-xl bg-smoke dark:bg-charcoal p-4">
+                  <div class="h-20 w-16 shrink-0 rounded-lg overflow-hidden bg-ink/5 dark:bg-paper/5">
+                    @if (item.product.imageUrl) {
+                      <img [src]="item.product.imageUrl" [alt]="item.product.name" class="h-full w-full object-cover" />
+                    }
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h3 class="font-bold truncate">{{ item.product.name }}</h3>
+                    <p class="font-mono text-xs opacity-60 mt-1">Cantidad: {{ item.quantity }} · \${{ item.unitPrice | number:'1.2-2' }} c/u</p>
+                  </div>
+                  <p class="font-mono font-bold shrink-0">\${{ item.totalPrice | number:'1.2-2' }}</p>
+                </div>
+              }
             </div>
-          }
-        </div>
 
-        <div class="bg-zinc-100 dark:bg-zinc-800 rounded-2xl p-6 space-y-2">
-          <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
-            <span>Subtotal</span>
-            <span>\${{ order.subtotal }}</span>
-          </div>
-          <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
-            <span>Shipping</span>
-            <span>{{ order.shippingCost > 0 ? '$' + order.shippingCost : 'Free' }}</span>
-          </div>
-          <div class="flex justify-between font-bold text-lg text-zinc-900 dark:text-white pt-2 border-t border-zinc-300 dark:border-zinc-700">
-            <span>Total</span>
-            <span>\${{ order.total }}</span>
-          </div>
-        </div>
+            <aside class="space-y-6">
+              <div class="rounded-xl bg-smoke dark:bg-charcoal p-5">
+                <h2 class="font-display text-xl mb-3">Envío</h2>
+                @if (parsedAddress(); as addr) {
+                  <address class="not-italic text-sm leading-relaxed opacity-80">
+                    {{ addr.fullName }}<br/>
+                    {{ addr.address }}<br/>
+                    {{ addr.city }}, {{ addr.postalCode }}<br/>
+                    {{ addr.phone }}
+                  </address>
+                } @else {
+                  <p class="text-sm opacity-50 font-mono">Sin dirección registrada.</p>
+                }
+              </div>
 
-        @if (order.shippingAddress) {
-          <div class="mt-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-2xl p-6">
-            <h3 class="font-semibold text-zinc-900 dark:text-white mb-2">Shipping address</h3>
-            <pre class="text-sm text-zinc-500 whitespace-pre-wrap font-sans">{{ order.shippingAddress }}</pre>
+              <div class="rounded-xl bg-ink text-paper dark:bg-paper dark:text-ink p-5">
+                <h2 class="font-display text-xl mb-3">Total</h2>
+                <dl class="space-y-2 font-mono text-sm">
+                  <div class="flex justify-between"><dt class="opacity-70">Subtotal</dt><dd>\${{ order.subtotal | number:'1.2-2' }}</dd></div>
+                  <div class="flex justify-between"><dt class="opacity-70">Envío</dt>
+                    <dd>{{ order.shippingCost === 0 ? 'Gratis' : ('$' + (order.shippingCost | number:'1.2-2')) }}</dd></div>
+                </dl>
+                <div class="mt-3 pt-3 border-t border-paper/15 dark:border-ink/15 flex justify-between font-mono font-bold text-lg">
+                  <span>Total</span><span>\${{ order.total | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </aside>
           </div>
+        } @else {
+          <div class="text-center py-24"><p class="text-zinc-500">Pedido no encontrado.</p></div>
         }
       </div>
-    } @else {
-      <div class="text-center py-24">
-        <p class="text-zinc-500">Order not found.</p>
-      </div>
-    }
+    </main>
   `,
 })
 export class OrderDetailPage implements OnInit {
   order = signal<Order | null>(null);
+  loading = signal(true);
+  statusSteps = ['pending', 'confirmed', 'shipped', 'delivered'];
 
   constructor(
     private route: ActivatedRoute,
     private orderService: OrderService,
   ) {}
 
-  statusColor(status: string): string {
-    const colors: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      confirmed: 'bg-blue-100 text-blue-800',
-      shipped: 'bg-purple-100 text-purple-800',
-      delivered: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
-    };
-    return colors[status] || '';
-  }
-
   ngOnInit(): void {
     const id = Number(this.route.snapshot.paramMap.get('id'));
     this.orderService.getById(id).subscribe({
-      next: (o) => this.order.set(o),
+      next: (o) => { this.order.set(o); this.loading.set(false); },
+      error: () => this.loading.set(false),
     });
+  }
+
+  parsedAddress(): { fullName: string; address: string; city: string; postalCode: string; phone: string } | null {
+    const addr = this.order()?.shippingAddress;
+    if (!addr) return null;
+    try { return JSON.parse(addr); } catch { return null; }
+  }
+
+  statusIndex(status: string): number {
+    return this.statusSteps.indexOf(status);
+  }
+
+  statusBadgeBg(status: string): string {
+    const map: Record<string, string> = {
+      pending: 'bg-yellow-400/20 text-yellow-700 dark:text-yellow-400',
+      confirmed: 'bg-blue-400/20 text-blue-700 dark:text-blue-400',
+      shipped: 'bg-lime/30 text-ink dark:text-lime',
+      delivered: 'bg-green-400/20 text-green-700 dark:text-green-400',
+      cancelled: 'bg-danger/20 text-danger',
+    };
+    return map[status] || '';
   }
 }

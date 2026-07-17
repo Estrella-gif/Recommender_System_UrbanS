@@ -1,92 +1,152 @@
 import { Component, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { DecimalPipe } from '@angular/common';
 import { CartService } from '../../services/cart.service';
 import { OrderService } from '../../services/order.service';
 
 @Component({
   selector: 'app-checkout',
   standalone: true,
-  imports: [FormsModule],
+  imports: [ReactiveFormsModule, DecimalPipe],
   template: `
-    <div class="max-w-2xl mx-auto px-4 py-16">
-      <h1 class="text-3xl font-bold text-zinc-900 dark:text-white mb-10">Checkout</h1>
+    <main class="bg-paper dark:bg-ink text-ink dark:text-paper min-h-screen">
+      <div class="mx-auto max-w-5xl px-5 py-10">
+        <h1 class="font-display text-4xl sm:text-5xl mb-8">Checkout</h1>
 
-      <div class="space-y-2 mb-8">
-        @for (item of cart.cartItems(); track item.product.id) {
-          <div class="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
-            <span>{{ item.product.name }} &times; {{ item.quantity }}</span>
-            <span>\${{ (item.product.price * item.quantity).toFixed(2) }}</span>
-          </div>
-        }
-        <div class="flex justify-between font-bold text-lg text-zinc-900 dark:text-white pt-4 border-t border-zinc-200 dark:border-zinc-800">
-          <span>Total</span>
-          <span>\${{ cart.subtotal().toFixed(2) }}</span>
+        <ol class="flex items-center gap-3 mb-10 font-mono text-xs uppercase">
+          <li class="flex items-center gap-2">
+            <span class="h-6 w-6 grid place-items-center rounded-full bg-lime text-ink font-bold">1</span>
+            <span class="font-bold">Envío</span>
+          </li>
+          <li class="h-px w-8 bg-ink/15 dark:bg-paper/15"></li>
+          <li class="flex items-center gap-2 opacity-40">
+            <span class="h-6 w-6 grid place-items-center rounded-full border border-ink/30 dark:border-paper/30">2</span>
+            <span>Pago</span>
+          </li>
+          <li class="h-px w-8 bg-ink/15 dark:bg-paper/15"></li>
+          <li class="flex items-center gap-2 opacity-40">
+            <span class="h-6 w-6 grid place-items-center rounded-full border border-ink/30 dark:border-paper/30">3</span>
+            <span>Confirmar</span>
+          </li>
+        </ol>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          <form [formGroup]="shippingForm" (ngSubmit)="onSubmit()" class="lg:col-span-2 space-y-5">
+            <h2 class="font-display text-2xl mb-2">Dirección de envío</h2>
+
+            <div class="relative">
+              <input type="text" formControlName="fullName" id="fullName" placeholder=" "
+                class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none" />
+              <label for="fullName" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Nombre completo</label>
+            </div>
+            <div class="relative">
+              <input type="text" formControlName="address" id="address" placeholder=" "
+                class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none" />
+              <label for="address" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Dirección</label>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="relative">
+                <input type="text" formControlName="city" id="city" placeholder=" "
+                  class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none" />
+                <label for="city" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Ciudad</label>
+              </div>
+              <div class="relative">
+                <input type="text" formControlName="postalCode" id="postalCode" placeholder=" "
+                  class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none" />
+                <label for="postalCode" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Código postal</label>
+              </div>
+            </div>
+            <div class="relative">
+              <input type="tel" formControlName="phone" id="phone" placeholder=" "
+                class="peer w-full rounded-lg border border-ink/15 dark:border-paper/15 bg-smoke dark:bg-charcoal px-4 pt-5 pb-2 text-sm focus:border-lime focus:ring-1 focus:ring-lime outline-none" />
+              <label for="phone" class="absolute left-4 top-1.5 text-[11px] font-mono opacity-60 pointer-events-none">Teléfono</label>
+            </div>
+
+            @if (error()) {
+              <p class="text-danger text-sm font-mono">{{ error() }}</p>
+            }
+
+            <button type="submit" [disabled]="shippingForm.invalid || submitting()"
+              class="hidden lg:block w-full rounded-full bg-lime text-ink font-bold py-3.5 hover:bg-ink hover:text-paper dark:hover:bg-paper dark:hover:text-ink transition-colors disabled:opacity-40">
+              {{ submitting() ? 'Confirmando…' : 'Confirmar pedido' }}
+            </button>
+          </form>
+
+          <aside class="rounded-xl bg-ink text-paper dark:bg-paper dark:text-ink p-6 h-fit">
+            <button type="button" class="lg:hidden w-full flex justify-between items-center font-display text-xl mb-4"
+              (click)="summaryExpanded.set(!summaryExpanded())">
+              Resumen del pedido <span>{{ summaryExpanded() ? '−' : '+' }}</span>
+            </button>
+            <h2 class="hidden lg:block font-display text-2xl mb-4">Resumen del pedido</h2>
+            <div [class.hidden]="!summaryExpanded()" class="lg:block">
+              <ul class="space-y-3 mb-4">
+                @for (item of cart.cartItems(); track item.product.id) {
+                  <li class="flex gap-3 text-sm">
+                    <div class="h-14 w-12 shrink-0 rounded bg-paper/10 dark:bg-ink/10 overflow-hidden">
+                      @if (item.product.imageUrl) {
+                        <img [src]="item.product.imageUrl" [alt]="item.product.name" class="h-full w-full object-cover" />
+                      }
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="truncate font-bold">{{ item.product.name }}</p>
+                      <p class="font-mono text-xs opacity-60">x{{ item.quantity }}</p>
+                    </div>
+                    <p class="font-mono">\${{ (item.product.price * item.quantity) | number:'1.2-2' }}</p>
+                  </li>
+                }
+              </ul>
+              <dl class="space-y-2 font-mono text-sm border-t border-paper/15 dark:border-ink/15 pt-4">
+                <div class="flex justify-between"><dt class="opacity-70">Subtotal</dt><dd>\${{ cart.subtotal() | number:'1.2-2' }}</dd></div>
+                <div class="flex justify-between"><dt class="opacity-70">Envío</dt><dd>Gratis</dd></div>
+              </dl>
+              <div class="mt-4 pt-4 border-t border-paper/15 dark:border-ink/15 flex justify-between font-mono font-bold text-lg">
+                <span>Total</span><span>\${{ cart.subtotal() | number:'1.2-2' }}</span>
+              </div>
+              <button type="button" (click)="onSubmit()" [disabled]="shippingForm.invalid || submitting()"
+                class="lg:hidden mt-6 w-full rounded-full bg-lime text-ink font-bold py-3.5 disabled:opacity-40">
+                {{ submitting() ? 'Confirmando…' : 'Confirmar pedido' }}
+              </button>
+            </div>
+          </aside>
         </div>
       </div>
-
-      <h3 class="font-semibold text-zinc-900 dark:text-white mb-4">Shipping address</h3>
-      <form (ngSubmit)="placeOrder()" #f="ngForm" class="space-y-4">
-        <input [(ngModel)]="name" name="name" placeholder="Full name" required
-          class="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:border-lime-400 transition-colors" />
-        <input [(ngModel)]="address" name="address" placeholder="Address" required
-          class="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:border-lime-400 transition-colors" />
-        <div class="grid grid-cols-2 gap-4">
-          <input [(ngModel)]="city" name="city" placeholder="City" required
-            class="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:border-lime-400 transition-colors" />
-          <input [(ngModel)]="zip" name="zip" placeholder="ZIP code" required
-            class="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:border-lime-400 transition-colors" />
-        </div>
-        <input [(ngModel)]="phone" name="phone" placeholder="Phone number"
-          class="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl text-sm focus:outline-none focus:border-lime-400 transition-colors" />
-
-        @if (error()) {
-          <p class="text-red-500 text-sm">{{ error() }}</p>
-        }
-
-        <button type="submit" [disabled]="!f.valid || loading() || !cart.cartItems().length"
-          class="w-full py-4 bg-lime-400 text-black font-bold text-lg rounded-2xl hover:bg-lime-300 disabled:opacity-40 transition-colors">
-          {{ loading() ? 'Placing order...' : 'Confirm order' }}
-        </button>
-      </form>
-    </div>
+    </main>
   `,
 })
 export class CheckoutPage {
-  name = '';
-  address = '';
-  city = '';
-  zip = '';
-  phone = '';
-  loading = signal(false);
+  shippingForm: FormGroup;
+  submitting = signal(false);
   error = signal('');
+  summaryExpanded = signal(true);
 
   constructor(
+    private fb: FormBuilder,
     readonly cart: CartService,
     private orderService: OrderService,
     private router: Router,
-  ) {}
-
-  placeOrder(): void {
-    this.loading.set(true);
-    this.error.set('');
-
-    const addressJson = JSON.stringify({
-      name: this.name,
-      address: this.address,
-      city: this.city,
-      zip: this.zip,
-      phone: this.phone,
+  ) {
+    this.shippingForm = this.fb.group({
+      fullName: ['', Validators.required],
+      address: ['', Validators.required],
+      city: ['', Validators.required],
+      postalCode: ['', Validators.required],
+      phone: [''],
     });
+  }
 
+  onSubmit(): void {
+    if (this.shippingForm.invalid) return;
+    this.submitting.set(true);
+    this.error.set('');
     this.orderService.create(this.cart.toOrderItems()).subscribe({
       next: (order) => {
         this.cart.clear();
         this.router.navigate(['/orders', order.id]);
       },
       error: (err) => {
-        this.error.set(err.error?.detail || 'Failed to place order');
-        this.loading.set(false);
+        this.error.set(err.error?.detail || 'Error al crear el pedido.');
+        this.submitting.set(false);
       },
     });
   }

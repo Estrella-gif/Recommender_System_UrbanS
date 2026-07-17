@@ -1,114 +1,172 @@
-import { Component, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, signal, effect } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Product, Recommendation } from '../../models';
 import { ProductService } from '../../services/product.service';
 import { RecommendationService } from '../../services/recommendation.service';
 import { CartService } from '../../services/cart.service';
 import { ProductCard } from '../../shared/product-card/product-card';
-import { SearchBar } from '../../shared/search-bar/search-bar';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [ProductCard, SearchBar, RouterLink],
+  imports: [ProductCard, RouterLink],
   template: `
-    <section class="relative bg-zinc-900 text-white">
-      <div class="max-w-7xl mx-auto px-4 py-24 md:py-32 text-center">
-        <h1 class="text-4xl md:text-6xl font-black tracking-tight mb-4">
-          Define Your <span class="text-lime-400">Style</span>
-        </h1>
-        <p class="text-zinc-400 text-lg mb-8 max-w-xl mx-auto">
-          Streetwear, sneakers y accesorios seleccionados para ti.
-        </p>
-        <app-search-bar (onSearch)="query.set($event)" />
-      </div>
-    </section>
-
-    @if (popular().length) {
-      <section class="max-w-7xl mx-auto px-4 py-16">
-        <div class="flex items-center justify-between mb-8">
-          <h2 class="text-2xl font-bold text-zinc-900 dark:text-white">Trending Now</h2>
-          <a routerLink="/recommendations" class="text-sm text-lime-500 hover:text-lime-400 font-medium transition-colors">
-            See all &rarr;
+    <main class="bg-paper dark:bg-ink text-ink dark:text-paper min-h-screen">
+      <!-- HERO -->
+      <section class="relative overflow-hidden">
+        <img src="https://images.unsplash.com/photo-1523398002811-999ca8dec234?q=80&w=1600" alt="" class="absolute inset-0 h-full w-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/20"></div>
+        <div class="relative mx-auto max-w-7xl px-5 pt-28 pb-16 sm:pt-36 sm:pb-24">
+          <p class="font-mono text-lime text-xs sm:text-sm tracking-widest mb-4">SS26 · DROP 004</p>
+          <h1 class="font-display text-paper text-[16vw] leading-[0.85] sm:text-8xl md:text-9xl">WEAR<br />THE<br />CITY</h1>
+          <p class="mt-6 max-w-md text-smoke/90 text-base sm:text-lg font-medium">
+            Streetwear diseñado en la calle, cortado para durar. Piezas limitadas, sin excusas.
+          </p>
+          <a routerLink="/" class="mt-8 inline-flex items-center gap-2 rounded-full bg-lime px-7 py-3.5 font-bold text-ink hover:bg-paper transition-colors">
+            Explorar colección <span aria-hidden="true">→</span>
           </a>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          @for (item of popular(); track item.productId) {
-            <app-product-card [product]="$any(item)" (onAddToCart)="addToCart($any(item))" />
+
+        <!-- MARQUEE -->
+        <div class="marquee py-2.5 relative">
+          <div class="marquee__track font-mono text-xs sm:text-sm">
+            @for (i of [0,1]; track i) {
+              <span class="flex items-center gap-8 px-4">
+                <span>ENVÍO GRATIS DESDE \$150</span><span aria-hidden="true">✦</span>
+                <span>DROP 004 — STOCK LIMITADO</span><span aria-hidden="true">✦</span>
+                <span>NUEVOS COLORWAYS CADA VIERNES</span><span aria-hidden="true">✦</span>
+                <span>DEVOLUCIONES EN 30 DÍAS</span><span aria-hidden="true">✦</span>
+              </span>
+            }
+          </div>
+        </div>
+      </section>
+
+      <!-- TRENDING NOW -->
+      <section class="mx-auto max-w-7xl px-5 pt-14">
+        <div class="flex items-baseline justify-between mb-6">
+          <h2 class="font-display text-3xl sm:text-4xl">Trending Now</h2>
+        </div>
+        <div class="flex gap-4 overflow-x-auto pb-4 no-scrollbar">
+          @if (loadingPopular()) {
+            @for (i of [1,2,3,4]; track i) {
+              <div class="skeleton h-72 w-52 shrink-0 rounded-xl"></div>
+            }
+          } @else {
+            @for (item of popular(); track item.productId) {
+              <article class="group relative w-52 shrink-0 fade-in">
+                <div class="hangtag">\${{ item.price }}</div>
+                <a [routerLink]="['/product', item.productId]" class="block">
+                  <div class="card-hover rounded-xl bg-smoke dark:bg-charcoal overflow-hidden">
+                    <div class="aspect-[3/4] bg-ink/5 dark:bg-paper/5">
+                      @if (item.imageUrl) {
+                        <img [src]="item.imageUrl" [alt]="item.name" class="h-full w-full object-cover" />
+                      } @else {
+                        <div class="h-full w-full flex items-center justify-center font-display text-4xl opacity-20">US</div>
+                      }
+                    </div>
+                    <div class="p-3">
+                      <p class="font-mono text-[10px] uppercase opacity-60">{{ item.brand }}</p>
+                      <h3 class="font-bold text-sm leading-tight mt-0.5">{{ item.name }}</h3>
+                      @if (item.score > 0) {
+                        <div class="mt-2 h-1 w-full rounded-full bg-ink/10 dark:bg-paper/10">
+                          <div class="h-1 rounded-full bg-lime" [style.width.%]="item.score * 100"></div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </a>
+              </article>
+            }
           }
         </div>
       </section>
-    }
 
-    <section class="max-w-7xl mx-auto px-4 py-16 border-t border-zinc-200 dark:border-zinc-800">
-      <h2 class="text-2xl font-bold text-zinc-900 dark:text-white mb-8">All Products</h2>
-      @if (loading()) {
+      <!-- PRODUCT GRID -->
+      <section class="mx-auto max-w-7xl px-5 py-14">
+        <h2 class="font-display text-3xl sm:text-4xl mb-6">Todo el catálogo</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          @for (i of [1,2,3,4,5,6,7,8]; track i) {
-            <div class="animate-pulse bg-zinc-100 dark:bg-zinc-800 rounded-2xl aspect-[3/4]"></div>
+          @if (loading()) {
+            @for (i of [1,2,3,4,5,6,7,8]; track i) {
+              <div class="skeleton h-80 rounded-xl"></div>
+            }
+          } @else if (products().length === 0) {
+            <div class="col-span-full text-center py-20">
+              <p class="font-display text-2xl mb-2">SIN RESULTADOS</p>
+              <p class="text-sm opacity-60">No encontramos productos. Prueba con otro término.</p>
+            </div>
+          } @else {
+            @for (product of products(); track product.id) {
+              <app-product-card [product]="product" (onAddToCart)="addToCart($event)" />
+            }
           }
         </div>
-      } @else {
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          @for (product of products(); track product.id) {
-            <app-product-card [product]="product" (onAddToCart)="addToCart($event)" />
-          }
-        </div>
-        @if (totalPages() > 1) {
-          <div class="flex justify-center gap-2 mt-10">
-            <button (click)="prevPage()" [disabled]="page() === 0"
-              class="px-4 py-2 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 disabled:opacity-40 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-              Previous
-            </button>
-            <span class="px-4 py-2 text-sm text-zinc-500">{{ page() + 1 }} / {{ totalPages() }}</span>
-            <button (click)="nextPage()" [disabled]="page() >= totalPages() - 1"
-              class="px-4 py-2 rounded-xl text-sm font-medium bg-zinc-100 dark:bg-zinc-800 disabled:opacity-40 hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors">
-              Next
-            </button>
+
+        @if (!loading() && totalPages() > 1) {
+          <div class="mt-10 flex items-center justify-center gap-2 font-mono text-sm">
+            <button type="button" [disabled]="page() === 0" (click)="changePage(page()-1)"
+              class="rounded-full border border-ink/15 dark:border-paper/15 px-3 py-1.5 disabled:opacity-30">←</button>
+            <span class="px-2">{{ page() + 1 }} / {{ totalPages() }}</span>
+            <button type="button" [disabled]="page() >= totalPages() - 1" (click)="changePage(page()+1)"
+              class="rounded-full border border-ink/15 dark:border-paper/15 px-3 py-1.5 disabled:opacity-30">→</button>
           </div>
         }
-      }
-    </section>
+      </section>
+    </main>
   `,
 })
 export class HomePage implements OnInit {
   products = signal<Product[]>([]);
   popular = signal<Recommendation[]>([]);
   loading = signal(true);
-  query = signal('');
+  loadingPopular = signal(true);
   page = signal(0);
   totalPages = signal(1);
+  searchTerm = '';
 
   constructor(
     private productService: ProductService,
     private recommendationService: RecommendationService,
     private cartService: CartService,
-  ) {}
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {
+    effect(() => {
+      const q = this.route.snapshot.queryParamMap.get('q');
+      if (q) this.searchTerm = q;
+    });
+  }
 
   ngOnInit(): void {
-    this.loadProducts();
+    this.route.queryParams.subscribe(params => {
+      this.searchTerm = params['q'] || '';
+      this.page.set(Number(params['page']) || 0);
+      this.loadProducts();
+    });
     this.recommendationService.getPopular(8).subscribe({
-      next: (r) => this.popular.set(r),
+      next: (r) => { this.popular.set(r); this.loadingPopular.set(false); },
+      error: () => this.loadingPopular.set(false),
     });
   }
 
   loadProducts(): void {
     this.loading.set(true);
-    const q = this.query().trim() || undefined;
+    const q = this.searchTerm.trim() || undefined;
     this.productService.search(q, undefined, undefined, this.page()).subscribe({
-      next: (page) => {
-        this.products.set(page.content);
-        this.totalPages.set(page.totalPages);
+      next: (p) => {
+        this.products.set(p.content);
+        this.totalPages.set(p.totalPages);
         this.loading.set(false);
       },
       error: () => this.loading.set(false),
     });
   }
 
-  addToCart(item: any): void {
-    this.cartService.add(item);
+  addToCart(product: Product): void {
+    this.cartService.add(product);
   }
 
-  prevPage(): void { this.page.update(p => Math.max(0, p - 1)); this.loadProducts(); }
-  nextPage(): void { this.page.update(p => p + 1); this.loadProducts(); }
+  changePage(page: number): void {
+    this.router.navigate([], { queryParams: { q: this.searchTerm || undefined, page: page || undefined }, queryParamsHandling: 'merge' });
+  }
 }
