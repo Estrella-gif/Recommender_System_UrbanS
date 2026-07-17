@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/urbansoul_db
+    username: ${DB_USERNAME:urbansoul}
+    password: ${DB_PASSWORD:urbansoul}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+
+server:
+  port: 8080
+
+ia:
+  service:
+    url: ${IA_SERVICE_URL:http://localhost:8000}
+
+jwt:
+  secret: ${JWT_SECRET:changeme}
+  expiration-ms: 86400000

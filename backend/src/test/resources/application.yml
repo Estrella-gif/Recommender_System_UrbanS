@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5433/urbansoul_db
+    username: urbansoul
+    password: urbansoul
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+jwt:
+  secret: this-is-a-test-secret-that-is-long-enough-for-hmac-sha512-algorithm-padding
+  expiration-ms: 3600000
+
+ia:
+  service:
+    url: http://localhost:8000

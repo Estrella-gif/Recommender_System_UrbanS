@@ -31,7 +31,19 @@ Recommender_System_UrbanS/
 │   │   ├── models/schemas.py  # Pydantic: RecommendationItem, RecommendationResponse
 │   │   └── services/recommender.py
 │   └── tests/
-├── backend/                   # Spring Boot (proximamente)
+├── backend/                   # Spring Boot 3.4 — REST API
+│   ├── .env-example
+│   ├── build.gradle
+│   └── src/main/java/com/urbansoul/backend/
+│       ├── config/            # Security, CORS
+│       ├── controller/        # Auth, Product, Recommendation, Order
+│       ├── dto/               # Requests y responses (records)
+│       ├── entity/            # JPA entities (8 tablas)
+│       ├── enums/             # EventType, OrderStatus
+│       ├── exception/         # GlobalExceptionHandler
+│       ├── repository/        # Spring Data JPA repos
+│       ├── security/          # JWT provider + filter
+│       └── service/           # Logica de negocio
 └── frontend/                  # Next.js (proximamente)
 ```
 
@@ -158,3 +170,27 @@ docker run -p 8000:8000 -v $(pwd)/app/ml:/app/app/ml urbans-ia
 ```
 
 > El volumen `-v` monta la carpeta `ml/` con los archivos `.pkl` y `.keras` generados por `batch_job.py`.
+
+### Backend — Spring Boot
+
+```bash
+cd backend
+
+# 1. Copiar variables de entorno
+cp .env-example .env
+# Editar .env con valores reales (especialmente JWT_SECRET)
+
+# 2. Compilar y ejecutar
+./gradlew bootRun
+```
+
+Endpoints:
+- `GET /api/products` — catalogo con busqueda y filtros
+- `GET /api/products/popular` — productos mas populares
+- `POST /api/auth/register` — registro
+- `POST /api/auth/login` — login (retorna JWT)
+- `GET /api/recommendations` — recomendaciones personalizadas (JWT requerido)
+- `GET /api/recommendations/popular` — recomendaciones populares (anonimo)
+- `POST /api/orders` — crear orden (JWT requerido)
+- `GET /api/orders` — listar ordenes del usuario (JWT requerido)
+- `GET /swagger` — Swagger UI
